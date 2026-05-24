@@ -178,25 +178,24 @@
       overflow: hidden;
     }
 
-    /* Color wipe: a pseudo-element sweeps across */
+    /* Color wipe: light overlay shrinks away to reveal dark */
     #transition::before {
       content: '';
       position: absolute;
       inset: 0;
-      background: var(--ink);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform 0.9s cubic-bezier(0.76, 0, 0.24, 1);
-      z-index: 0;
+      background: var(--bg);
+      transform-origin: right;
+      transition: transform 1s cubic-bezier(0.76, 0, 0.24, 1);
+      z-index: 1;
     }
     #transition.in-view::before {
-      transform: scaleX(1);
+      transform: scaleX(0);
     }
 
     /* Content sits above the wipe */
     #transition > * {
       position: relative;
-      z-index: 1;
+      z-index: 2;
     }
 
     .transition-line {
@@ -586,9 +585,9 @@
       transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
                   transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    #transition.in-view .transition-line { opacity: 1; transform: none; transition-delay: 0s; }
-    #transition.in-view .transition-sub { opacity: 1; transform: none; transition-delay: 0.2s; }
-    #transition.in-view .cta-button    { opacity: 1; transform: none; transition-delay: 0.4s; }
+    #transition.in-view .transition-line { opacity: 1; transform: none; transition-delay: 0.5s; }
+    #transition.in-view .transition-sub { opacity: 1; transform: none; transition-delay: 0.7s; }
+    #transition.in-view .cta-button    { opacity: 1; transform: none; transition-delay: 0.9s; }
 
     /* Value section: two-line stagger */
     #value .value-text {

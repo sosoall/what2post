@@ -721,7 +721,8 @@
     scenes.forEach(s => sceneObserver.observe(s));
 
     /* ── Form submit ── */
-    const WAITLIST_API = '/api/waitlist'; // Update to your Cloudflare Worker URL in production
+    const SUPABASE_URL = 'https://zwlxarnwsotkjsqjkurm.supabase.co';       // e.g. https://xxxxx.supabase.co
+    const SUPABASE_ANON_KEY = 'sb_publishable_PvhgSEwygyaOf64iOEbSRg_AxERDDLe'; // Settings → API → anon/public
 
     document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -736,27 +737,32 @@
         return;
       }
 
-      // Loading state
       btn.disabled = true;
       btn.textContent = 'Joining...';
 
       try {
-        const res = await fetch(WAITLIST_API, {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Prefer': 'return=representation,resolution=merge-duplicates',
+          },
           body: JSON.stringify({ email }),
         });
 
         const data = await res.json();
 
-        if (data.duplicate) {
+        // Supabase returns 409 for unique constraint violation
+        if (res.status === 409 || (data.code === '23505')) {
           document.getElementById('formState1').style.display = 'none';
           document.getElementById('formDuplicate').classList.add('show');
-        } else if (data.ok) {
+        } else if (res.ok) {
           document.getElementById('formState1').style.display = 'none';
           document.getElementById('formSuccess').classList.add('show');
         } else {
-          throw new Error(data.error || 'Unknown error');
+          throw new Error(data.message || 'Unknown error');
         }
       } catch (err) {
         document.getElementById('formState1').style.display = 'none';

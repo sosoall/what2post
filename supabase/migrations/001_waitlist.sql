@@ -12,8 +12,12 @@ CREATE INDEX idx_waitlist_status ON waitlist (status);
 -- Enable Row Level Security
 ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 
--- Service role can do everything (used by Cloudflare Worker)
-CREATE POLICY "Service role full access" ON waitlist
-  FOR ALL
-  USING (true)
+-- Anyone can INSERT (signup from frontend)
+CREATE POLICY "Allow public insert" ON waitlist
+  FOR INSERT
   WITH CHECK (true);
+
+-- No SELECT/UPDATE/DELETE for anon — only service role can read
+CREATE POLICY "No public read" ON waitlist
+  FOR SELECT
+  USING (false);

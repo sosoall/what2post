@@ -82,7 +82,7 @@ async function sendWelcomeEmail(env, to) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: env.FROM_EMAIL,
+      from: 'onboarding@resend.dev',
       to,
       subject: "You're in! Welcome to What2post",
       html: welcomeEmailHtml(),

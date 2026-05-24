@@ -453,6 +453,72 @@
       transition: opacity 0.7s ease, transform 0.7s ease;
     }
 
+    /* ─── SCROLL ANIMATIONS ─── */
+    .anim-fade-up,
+    .anim-scale-in,
+    .anim-slide-left,
+    .anim-slide-right,
+    .anim-pop {
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .anim-fade-up    { transform: translateY(60px); }
+    .anim-scale-in   { transform: scale(0.85); }
+    .anim-slide-left { transform: translateX(-80px); }
+    .anim-slide-right{ transform: translateX(80px); }
+    .anim-pop        { transform: scale(0.5) translateY(30px); }
+
+    .in-view {
+      opacity: 1 !important;
+      transform: none !important;
+    }
+
+    /* Staggered children */
+    .anim-stagger .anim-child:nth-child(1) { transition-delay: 0s; }
+    .anim-stagger .anim-child:nth-child(2) { transition-delay: 0.15s; }
+    .anim-stagger .anim-child:nth-child(3) { transition-delay: 0.3s; }
+    .anim-stagger .anim-child:nth-child(4) { transition-delay: 0.45s; }
+    .anim-stagger .anim-child:nth-child(5) { transition-delay: 0.6s; }
+
+    /* Transition section special: reverse bg */
+    #transition .transition-line,
+    #transition .transition-sub,
+    #transition .cta-button {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #transition.in-view .transition-line { opacity: 1; transform: none; transition-delay: 0s; }
+    #transition.in-view .transition-sub { opacity: 1; transform: none; transition-delay: 0.2s; }
+    #transition.in-view .cta-button    { opacity: 1; transform: none; transition-delay: 0.4s; }
+
+    /* Value section: two-line stagger */
+    #value .value-text {
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #value.in-view .value-text {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* Waitlist card pop */
+    .waitlist-card {
+      opacity: 0;
+      transform: scale(0.9) translateY(40px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    #waitlist.in-view .waitlist-card {
+      opacity: 1;
+      transform: none;
+    }
+
     /* Responsive */
     @media (max-width: 600px) {
       .waitlist-card {
@@ -561,14 +627,14 @@
   </section>
 
   <!-- ── PAINPOINTS ── -->
-  <section class="painpoint">
+  <section class="painpoint anim-fade-up">
     <h2 class="painpoint-title">Ever run into this?</h2>
     <div class="scroll-hint" style="opacity:1"><span>scroll</span><div class="scroll-arrow"></div></div>
   </section>
 
   <section class="painpoint">
-    <div class="scene">
-      <div class="comic-wrap">
+    <div class="scene anim-fade-up">
+      <div class="comic-wrap anim-scale-in">
         <img src="1.png" alt="A solo founder's daily mission" />
       </div>
       <h2 class="scene-title">You know you need to post every day.<br />But between meetings and actual work — where's the time?</h2>
@@ -576,8 +642,8 @@
   </section>
 
   <section class="painpoint">
-    <div class="scene">
-      <div class="comic-wrap">
+    <div class="scene anim-fade-up">
+      <div class="comic-wrap anim-scale-in">
         <img src="2.png" alt="AI tools don't know your audience" />
       </div>
       <h2 class="scene-title">You ask AI for ideas.<br />It just asks you what's the topic. Not helpful.</h2>
@@ -585,8 +651,8 @@
   </section>
 
   <section class="painpoint">
-    <div class="scene">
-      <div class="comic-wrap">
+    <div class="scene anim-fade-up">
+      <div class="comic-wrap anim-scale-in">
         <img src="3.png" alt="What's the topic today?" />
       </div>
       <h2 class="scene-title">So you stare at a blank screen.<br />And hope inspiration shows up. It rarely does.</h2>
@@ -706,19 +772,21 @@
     }
     type();
 
-    /* ── Scroll-reveal scenes ── */
-    const scenes = document.querySelectorAll('.scene');
-    const sceneObserver = new IntersectionObserver(
+    /* ── Scroll-reveal: unified observer ── */
+    const animElements = document.querySelectorAll(
+      '.anim-fade-up, .anim-scale-in, .anim-slide-left, .anim-slide-right, .anim-pop, #transition, #value, #waitlist .waitlist-card'
+    );
+    const animObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(e => {
           if (e.isIntersecting) {
-            e.target.classList.add('visible');
+            e.target.classList.add('in-view');
           }
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.15 }
     );
-    scenes.forEach(s => sceneObserver.observe(s));
+    animElements.forEach(el => animObserver.observe(el));
 
     /* ── Form submit ── */
     const SUPABASE_URL = 'https://zwlxarnwsotkjsqjkurm.supabase.co';       // e.g. https://xxxxx.supabase.co

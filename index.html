@@ -957,57 +957,45 @@
     animElements.forEach(el => animObserver.observe(el));
 
     /* ── Painpoint progress bar + dots ── */
-    const painSections = document.querySelectorAll('.painpoint');
+    // The 3 comic sections (skip index 0 which is "Ever run into this?")
+    const comicSections = Array.from(document.querySelectorAll('.painpoint')).slice(1, 4);
     const progressBar = document.getElementById('progressBar');
     const progressFill = document.getElementById('progressFill');
     const progressDots = document.getElementById('progressDots');
     const dots = document.querySelectorAll('.progress-dot');
 
-    const progressObserver = new IntersectionObserver((entries) => {
+    // Track which comic is in view
+    const comicObserver = new IntersectionObserver((entries) => {
       entries.forEach(e => {
-        const idx = Array.from(painSections).indexOf(e.target);
-        if (idx < 0 || idx > 2) return; // only the 3 comic scenes
-
-        if (e.isIntersecting) {
-          dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-        }
+        if (!e.isIntersecting) return;
+        const idx = comicSections.indexOf(e.target);
+        if (idx < 0) return;
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
       });
-    }, { threshold: 0.5 });
+    }, { threshold: 0.6 });
+    comicSections.forEach(s => comicObserver.observe(s));
 
-    // Observe only the 3 comic painpoint sections (skip the intro "Ever run into this?")
-    painSections.forEach((s, i) => {
-      if (i > 0 && i <= 3) progressObserver.observe(s);
-    });
-
-    // Show/hide progress UI based on whether we're in the painpoint zone
-    const painZoneObserver = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          progressBar.classList.add('visible');
-          progressDots.classList.add('visible');
-        } else {
-          // Only hide if we've scrolled past all painpoints
-          const allHidden = Array.from(painSections).every(s => {
-            const rect = s.getBoundingClientRect();
-            return rect.bottom < 0 || rect.top > window.innerHeight;
-          });
-          if (allHidden) {
-            progressBar.classList.remove('visible');
-            progressDots.classList.remove('visible');
-          }
-        }
+    // Show progress UI only when any comic section is visible
+    const zoneObserver = new IntersectionObserver(() => {
+      const anyVisible = comicSections.some(s => {
+        const r = s.getBoundingClientRect();
+        return r.top < window.innerHeight && r.bottom > 0;
       });
-    }, { threshold: 0.1 });
+      progressBar.classList.toggle('visible', anyVisible);
+      progressDots.classList.toggle('visible', anyVisible);
+    }, { threshold: 0.01 });
+    // Observe the intro section to know when we enter/leave the painpoint zone
+    const introSection = document.querySelector('.painpoint');
+    zoneObserver.observe(introSection);
+    comicSections.forEach(s => zoneObserver.observe(s));
 
-    painSections.forEach(s => painZoneObserver.observe(s));
-
-    // Update progress bar width on scroll
+    // Progress bar fill on scroll
     window.addEventListener('scroll', () => {
       if (!progressBar.classList.contains('visible')) return;
-      const first = painSections[0];
-      const last = painSections[painSections.length - 1];
-      const start = first.offsetTop;
-      const end = last.offsetTop + last.offsetHeight - window.innerHeight;
+      const first = comicSections[0];
+      const last = comicSections[comicSections.length - 1];
+      const start = first.offsetTop - window.innerHeight * 0.5;
+      const end = last.offsetTop + last.offsetHeight - window.innerHeight * 0.5;
       const progress = Math.min(1, Math.max(0, (window.scrollY - start) / (end - start)));
       progressFill.style.width = (progress * 100) + '%';
     }, { passive: true });

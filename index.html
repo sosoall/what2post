@@ -694,87 +694,8 @@
 
   <!-- ── HERO ── -->
   <section id="hero">
-    <!-- Logo: magic hat + rabbit, 4-state loop -->
-    <svg class="hero-logo" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- Hat brim -->
-      <ellipse cx="60" cy="90" rx="44" ry="8" fill="#1a1a1a"/>
-      <!-- Hat cylinder -->
-      <path d="M30 40 L30 90 L90 90 L90 40 Z" fill="#1a1a1a"/>
-      <!-- Hat dome (fills interior) -->
-      <ellipse cx="60" cy="40" rx="30" ry="7" fill="#1a1a1a"/>
-      <!-- Hat interior (hollow oval at top of cylinder) -->
-      <ellipse cx="60" cy="40" rx="25" ry="5" fill="#f5f0e8"/>
-
-      <!-- ── RABBIT GROUP — all animation on this ── -->
-      <g id="rabbit">
-
-        <!-- BODY -->
-        <ellipse id="rb-body" cx="60" cy="62" rx="16" ry="17" fill="#1a1a1a"/>
-
-        <!-- HEAD -->
-        <circle id="rb-head" cx="60" cy="44" r="13" fill="#1a1a1a"/>
-
-        <!-- EARS (inner lighter ellipse + outer dark) -->
-        <g id="rb-ears">
-          <ellipse cx="52" cy="22" rx="5" ry="16" fill="#1a1a1a" transform="rotate(-12 52 28)"/>
-          <ellipse cx="68" cy="22" rx="5" ry="16" fill="#1a1a1a" transform="rotate(12 68 28)"/>
-          <!-- inner ear lines -->
-          <ellipse cx="52" cy="22" rx="2.5" ry="10" fill="#f5f0e8" transform="rotate(-12 52 28)"/>
-          <ellipse cx="68" cy="22" rx="2.5" ry="10" fill="#f5f0e8" transform="rotate(12 68 28)"/>
-        </g>
-
-        <!-- FACE details (on head) -->
-        <g id="rb-face">
-          <!-- Eyes -->
-          <circle cx="55" cy="42" r="2" fill="#f5f0e8"/>
-          <circle cx="65" cy="42" r="2" fill="#f5f0e8"/>
-          <!-- Nose -->
-          <ellipse cx="60" cy="47" rx="2" ry="1.5" fill="#f5f0e8"/>
-          <!-- Smile -->
-          <path d="M56 49 Q60 52 64 49" stroke="#f5f0e8" stroke-width="1" fill="none" stroke-linecap="round"/>
-        </g>
-
-        <!-- ARMS group -->
-        <g id="rb-arms">
-          <!-- Default left arm -->
-          <ellipse id="rb-left-arm" cx="44" cy="60" rx="5" ry="10" fill="#1a1a1a" transform="rotate(-25 44 60)"/>
-          <!-- Default right arm -->
-          <ellipse id="rb-right-arm" cx="76" cy="60" rx="5" ry="10" fill="#1a1a1a" transform="rotate(25 76 60)"/>
-        </g>
-
-        <!-- SNAP FINGER right hand (hidden by default) -->
-        <g id="rb-snap-hand" style="display:none">
-          <ellipse cx="88" cy="52" rx="5" ry="7" fill="#1a1a1a" transform="rotate(40 88 52)"/>
-          <!-- snap spark -->
-          <g id="rb-snap-spark" style="display:none">
-            <line x1="94" y1="44" x2="99" y2="40" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="96" y1="48" x2="102" y2="48" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="94" y1="52" x2="99" y2="56" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-          </g>
-        </g>
-
-        <!-- HEART (hidden by default) -->
-        <g id="rb-heart" style="display:none">
-          <path d="M60 40 C60 37, 63 34, 66 36 C69 38, 69 42, 60 49 C51 42, 51 38, 54 36 C57 34, 60 37, 60 40Z"
-                fill="#e63946" stroke="#f5f0e8" stroke-width="0.5"/>
-        </g>
-
-        <!-- MAGIC SPARKLES (hidden by default) -->
-        <g id="rb-sparkles" style="display:none">
-          <g>
-            <line x1="35" y1="30" x2="31" y2="24" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="37" y1="24" x2="37" y2="18" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="42" y1="20" x2="47" y2="15" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-          </g>
-          <g>
-            <line x1="85" y1="30" x2="89" y2="24" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="83" y1="24" x2="83" y2="18" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-            <line x1="78" y1="20" x2="73" y2="15" stroke="#f5f0e8" stroke-width="1.5" stroke-linecap="round"/>
-          </g>
-        </g>
-
-      </g>
-      <!-- end #rabbit -->
+    <!-- Loading video animation -->
+    <video class="hero-logo" src="loading.mp4" autoplay loop muted playsinline></video>
 
       <!-- MAGIC HAT BAND accent -->
       <rect x="30" y="64" width="60" height="4" fill="#f5f0e8"/>

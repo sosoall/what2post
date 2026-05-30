@@ -977,10 +977,22 @@
       });
     }
 
+    function scrollToWaitlist() {
+      const section = document.getElementById('waitlist');
+      if (!section) return;
+
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          section.scrollIntoView({ behavior: 'auto', block: 'start' });
+        });
+      });
+    }
+
     function showJoinedStateFromUrl() {
       const url = new URL(window.location.href);
       if (url.searchParams.get('joined') !== '1') return;
       showWaitlistState('formSuccess');
+      scrollToWaitlist();
       url.searchParams.delete('joined');
       history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }

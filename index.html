@@ -961,6 +961,9 @@
     async function initClerk() {
       const clerk = await loadClerkScript(CLERK_PUBLISHABLE_KEY);
       await clerk.load();
+      // #region debug-point A:clerk-shape
+      fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"clerk-waitlist-join",runId:"pre-fix",hypothesisId:"A",location:"index.html:initClerk",msg:"[DEBUG] Clerk loaded",data:{hasWaitlist:!!clerk.waitlist,waitlistType:typeof clerk.waitlist,hasJoinWaitlist:typeof clerk.joinWaitlist==="function",keys:Object.keys(clerk).filter(k=>k.toLowerCase().includes("waitlist"))},ts:Date.now()})}).catch(()=>{});
+      // #endregion
       return clerk;
     }
 
@@ -1008,6 +1011,9 @@
 
       try {
         const clerk = await clerkPromise;
+        // #region debug-point B:submit-shape
+        fetch("http://127.0.0.1:7777/event",{method:"POST",body:JSON.stringify({sessionId:"clerk-waitlist-join",runId:"pre-fix",hypothesisId:"B",location:"index.html:submit",msg:"[DEBUG] Waitlist submit attempt",data:{email,hasWaitlist:!!clerk.waitlist,waitlistJoinType:typeof clerk.waitlist?.join,hasJoinWaitlist:typeof clerk.joinWaitlist==="function"},ts:Date.now()})}).catch(()=>{});
+        // #endregion
         const { error } = await clerk.waitlist.join({ emailAddress: email });
 
         if (error) {

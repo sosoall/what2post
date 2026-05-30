@@ -922,84 +922,7 @@
     }, { passive: true });
 
     /* ── Form submit ── */
-    const CLERK_PUBLISHABLE_KEY = 'pk_test_bWFpbi1tb25pdG9yLTM4LmNsZXJrLmFjY291bnRzLmRldiQ';
-    const DEBUG_SERVER_URL = 'https://eded987a8fb493.lhr.life/event';
-    const DEBUG_SESSION_ID = 'clerk-waitlist-api';
-    const clerkPromise = initClerk();
-
-    function debugEvent(hypothesisId, location, msg, data) {
-      if (!DEBUG_SERVER_URL) return;
-      fetch(DEBUG_SERVER_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          sessionId: DEBUG_SESSION_ID,
-          runId: 'pre-fix',
-          hypothesisId,
-          location,
-          msg: `[DEBUG] ${msg}`,
-          data,
-          ts: Date.now(),
-        }),
-      }).catch(() => {});
-    }
-
-    function decodeClerkFrontendApi(publishableKey) {
-      const encoded = publishableKey.split('_')[2];
-      if (!encoded) throw new Error('Missing Clerk frontend API in publishable key');
-      const padded = encoded.padEnd(encoded.length + ((4 - encoded.length % 4) % 4), '=');
-      return atob(padded).slice(0, -1);
-    }
-
-    function loadClerkScript(publishableKey) {
-      if (window.Clerk) return Promise.resolve(window.Clerk);
-
-      const frontendApi = decodeClerkFrontendApi(publishableKey);
-      const scriptSrc = `https://${frontendApi}/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
-
-      return new Promise((resolve, reject) => {
-        const existing = document.querySelector(`script[src="${scriptSrc}"]`);
-        if (existing) {
-          existing.addEventListener('load', () => resolve(window.Clerk), { once: true });
-          existing.addEventListener('error', () => reject(new Error('Failed to load Clerk')), { once: true });
-          return;
-        }
-
-        const script = document.createElement('script');
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.type = 'text/javascript';
-        script.src = scriptSrc;
-        script.setAttribute('data-clerk-publishable-key', publishableKey);
-        script.onload = () => resolve(window.Clerk);
-        script.onerror = () => reject(new Error('Failed to load Clerk'));
-        document.head.appendChild(script);
-      });
-    }
-
-    async function initClerk() {
-      const clerk = await loadClerkScript(CLERK_PUBLISHABLE_KEY);
-      // #region debug-point A:clerk-before-load
-      debugEvent('A', 'index.html:initClerk:beforeLoad', 'Clerk instance before load', {
-        hasWaitlist: !!clerk.waitlist,
-        waitlistJoinType: typeof clerk.waitlist?.join,
-        joinWaitlistType: typeof clerk.joinWaitlist,
-        mountWaitlistType: typeof clerk.mountWaitlist,
-        openWaitlistType: typeof clerk.openWaitlist,
-      });
-      // #endregion
-      await clerk.load();
-      // #region debug-point B:clerk-after-load
-      debugEvent('B', 'index.html:initClerk:afterLoad', 'Clerk instance after load', {
-        hasWaitlist: !!clerk.waitlist,
-        waitlistJoinType: typeof clerk.waitlist?.join,
-        joinWaitlistType: typeof clerk.joinWaitlist,
-        mountWaitlistType: typeof clerk.mountWaitlist,
-        openWaitlistType: typeof clerk.openWaitlist,
-        waitlistKeys: Object.keys(clerk).filter(key => key.toLowerCase().includes('waitlist')),
-      });
-      // #endregion
-      return clerk;
-    }
+    const WAITLIST_PAGE_URL = '/waitlist/';
 
     function showWaitlistState(stateId) {
       document.getElementById('formState1').style.display = stateId === 'formState1' ? '' : 'none';
@@ -1008,24 +931,19 @@
       });
     }
 
-    function getClerkErrorDetails(error) {
-      const first = error?.errors?.[0];
-      return {
-        code: first?.code || error?.code || '',
-        longMessage: first?.longMessage || first?.message || error?.message || '',
-      };
+    function showJoinedStateFromUrl() {
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('joined') !== '1') return;
+      showWaitlistState('formSuccess');
+      url.searchParams.delete('joined');
+      history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
 
-    function isDuplicateWaitlistError(details) {
-      const text = `${details.code} ${details.longMessage}`.toLowerCase();
-      return text.includes('identification_exists')
-        || text.includes('already')
-        || text.includes('exists');
+    function buildWaitlistUrl(email) {
+      return `${WAITLIST_PAGE_URL}?email=${encodeURIComponent(email)}`;
     }
 
-    clerkPromise.catch(err => {
-      console.error('Clerk init error:', err);
-    });
+    showJoinedStateFromUrl();
 
     document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -1041,43 +959,8 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Joining...';
-
-      try {
-        const clerk = await clerkPromise;
-        // #region debug-point C:submit-shape
-        debugEvent('C', 'index.html:submit:beforeJoin', 'Submit with Clerk method shape', {
-          email,
-          hasWaitlist: !!clerk.waitlist,
-          waitlistJoinType: typeof clerk.waitlist?.join,
-          joinWaitlistType: typeof clerk.joinWaitlist,
-          mountWaitlistType: typeof clerk.mountWaitlist,
-          openWaitlistType: typeof clerk.openWaitlist,
-        });
-        // #endregion
-        await clerk.joinWaitlist({ emailAddress: email });
-        // #region debug-point D:submit-success
-        debugEvent('D', 'index.html:submit:success', 'Join waitlist success', { email });
-        // #endregion
-        showWaitlistState('formSuccess');
-      } catch (err) {
-        // #region debug-point E:submit-error
-        debugEvent('E', 'index.html:submit:error', 'Join waitlist failed', {
-          name: err?.name,
-          message: err?.message,
-          code: err?.code,
-          firstErrorCode: err?.errors?.[0]?.code,
-          firstErrorMessage: err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
-        });
-        // #endregion
-        const details = getClerkErrorDetails(err);
-        if (isDuplicateWaitlistError(details)) {
-          showWaitlistState('formDuplicate');
-          return;
-        }
-        showWaitlistState('formError');
-        console.error('Waitlist submit error:', err);
-      }
+      btn.textContent = 'Continuing...';
+      window.location.href = buildWaitlistUrl(email);
     });
   </script>
 </body>

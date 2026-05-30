@@ -948,15 +948,15 @@
             'Content-Type': 'application/json',
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=representation,resolution=merge-duplicates',
+            'Prefer': 'return=representation',
           },
           body: JSON.stringify({ email }),
         });
 
         const data = await res.json();
 
-        // Supabase returns 409 for unique constraint violation
-        if (res.status === 409 || (data.code === '23505')) {
+        // Treat database unique constraint violations as "already joined"
+        if (data.code === '23505' || res.status === 409) {
           document.getElementById('formState1').style.display = 'none';
           document.getElementById('formDuplicate').classList.add('show');
         } else if (res.ok) {

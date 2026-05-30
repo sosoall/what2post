@@ -467,6 +467,14 @@
       text-align: center;
     }
 
+    .clerk-waitlist-root {
+      width: 100%;
+    }
+
+    .clerk-waitlist-root:empty {
+      min-height: 160px;
+    }
+
     /* Form submit state */
     .form-success {
       display: none;
@@ -778,10 +786,7 @@
           <li>Weekly building updates + insights while you wait</li>
         </ul>
 
-        <form id="waitlistForm" class="form-email-wrap" novalidate>
-          <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email" required />
-          <button type="submit" id="submitBtn">Join the waitlist →</button>
-        </form>
+        <div id="waitlistRoot" class="clerk-waitlist-root"></div>
         <p class="form-note" id="formNote">No spam. Unsubscribe anytime.</p>
       </div>
 
@@ -809,6 +814,21 @@
   <footer>
     <span>what2post © 2026</span>
   </footer>
+
+  <script
+    defer
+    crossorigin="anonymous"
+    src="https://main-monitor-38.clerk.accounts.dev/npm/@clerk/ui@1/dist/ui.browser.js"
+    type="text/javascript"
+  ></script>
+
+  <script
+    defer
+    crossorigin="anonymous"
+    data-clerk-publishable-key="pk_test_bWFpbi1tb25pdG9yLTM4LmNsZXJrLmFjY291bnRzLmRldiQ"
+    src="https://main-monitor-38.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js"
+    type="text/javascript"
+  ></script>
 
   <script>
     /* ── Magic Hat Logo Animation ── */
@@ -921,8 +941,7 @@
       progressFill.style.width = (progress * 100) + '%';
     }, { passive: true });
 
-    /* ── Form submit ── */
-    const WAITLIST_PAGE_URL = '/waitlist/';
+    /* ── Waitlist ── */
 
     function showWaitlistState(stateId) {
       document.getElementById('formState1').style.display = stateId === 'formState1' ? '' : 'none';
@@ -939,28 +958,28 @@
       history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
 
-    function buildWaitlistUrl(email) {
-      return `${WAITLIST_PAGE_URL}?email=${encodeURIComponent(email)}`;
-    }
-
     showJoinedStateFromUrl();
 
-    document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      const input = document.getElementById('emailInput');
-      const btn = document.getElementById('submitBtn');
-      const email = input.value.trim();
+    window.addEventListener('load', async function () {
+      const root = document.getElementById('waitlistRoot');
+      if (!root || document.getElementById('formSuccess').classList.contains('show')) return;
 
-      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        input.style.borderColor = '#e63946';
-        input.focus();
-        setTimeout(() => { input.style.borderColor = ''; }, 1500);
-        return;
+      try {
+        await Clerk.load({
+          ui: { ClerkUI: window.__internal_ClerkUICtor },
+        });
+
+        if (typeof Clerk.mountWaitlist !== 'function') {
+          throw new Error('Clerk Waitlist UI is unavailable.');
+        }
+
+        Clerk.mountWaitlist(root, {
+          afterJoinWaitlistUrl: '/?joined=1#waitlist',
+        });
+      } catch (err) {
+        showWaitlistState('formError');
+        console.error('Clerk waitlist mount error:', err);
       }
-
-      btn.disabled = true;
-      btn.textContent = 'Continuing...';
-      window.location.href = buildWaitlistUrl(email);
     });
   </script>
 </body>

@@ -958,6 +958,46 @@
       history.replaceState({}, '', `${url.pathname}${url.search}${url.hash}`);
     }
 
+    function hideClerkSignInEntry(root) {
+      const hideSignInRow = function () {
+        let hidden = false;
+
+        const exactRow = Array.from(root.querySelectorAll('*')).find(function (el) {
+          const text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          return text === 'already have access? sign in' || text === 'already have access ? sign in';
+        });
+
+        if (exactRow) {
+          exactRow.style.display = 'none';
+          hidden = true;
+        }
+
+        root.querySelectorAll('a, button').forEach(function (el) {
+          const text = (el.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          if (!text.includes('sign in')) return;
+
+          const row = el.closest('div');
+          if (row && row !== root) {
+            row.style.display = 'none';
+          } else {
+            el.style.display = 'none';
+          }
+          hidden = true;
+        });
+
+        return hidden;
+      };
+
+      hideSignInRow();
+
+      const observer = new MutationObserver(function () {
+        hideSignInRow();
+      });
+
+      observer.observe(root, { childList: true, subtree: true });
+      return observer;
+    }
+
     showJoinedStateFromUrl();
 
     window.addEventListener('load', async function () {
@@ -976,6 +1016,8 @@
         Clerk.mountWaitlist(root, {
           afterJoinWaitlistUrl: '/?joined=1#waitlist',
         });
+
+        hideClerkSignInEntry(root);
       } catch (err) {
         showWaitlistState('formError');
         console.error('Clerk waitlist mount error:', err);

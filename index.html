@@ -923,7 +923,25 @@
 
     /* ── Form submit ── */
     const CLERK_PUBLISHABLE_KEY = 'pk_test_bWFpbi1tb25pdG9yLTM4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const DEBUG_SERVER_URL = 'https://cleat-passably-hammock.ngrok-free.dev/event';
+    const DEBUG_SESSION_ID = 'clerk-waitlist-api';
     const clerkPromise = initClerk();
+
+    function debugEvent(hypothesisId, location, msg, data) {
+      if (!DEBUG_SERVER_URL) return;
+      fetch(DEBUG_SERVER_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          sessionId: DEBUG_SESSION_ID,
+          runId: 'pre-fix',
+          hypothesisId,
+          location,
+          msg: `[DEBUG] ${msg}`,
+          data,
+          ts: Date.now(),
+        }),
+      }).catch(() => {});
+    }
 
     function decodeClerkFrontendApi(publishableKey) {
       const encoded = publishableKey.split('_')[2];
@@ -960,7 +978,22 @@
 
     async function initClerk() {
       const clerk = await loadClerkScript(CLERK_PUBLISHABLE_KEY);
+      // #region debug-point A:clerk-before-load
+      debugEvent('A', 'index.html:initClerk:beforeLoad', 'Clerk instance before load', {
+        hasWaitlist: !!clerk.waitlist,
+        waitlistJoinType: typeof clerk.waitlist?.join,
+        joinWaitlistType: typeof clerk.joinWaitlist,
+      });
+      // #endregion
       await clerk.load();
+      // #region debug-point B:clerk-after-load
+      debugEvent('B', 'index.html:initClerk:afterLoad', 'Clerk instance after load', {
+        hasWaitlist: !!clerk.waitlist,
+        waitlistJoinType: typeof clerk.waitlist?.join,
+        joinWaitlistType: typeof clerk.joinWaitlist,
+        waitlistKeys: Object.keys(clerk).filter(key => key.toLowerCase().includes('waitlist')),
+      });
+      // #endregion
       return clerk;
     }
 
@@ -1008,9 +1041,29 @@
 
       try {
         const clerk = await clerkPromise;
+        // #region debug-point C:submit-shape
+        debugEvent('C', 'index.html:submit:beforeJoin', 'Submit with Clerk method shape', {
+          email,
+          hasWaitlist: !!clerk.waitlist,
+          waitlistJoinType: typeof clerk.waitlist?.join,
+          joinWaitlistType: typeof clerk.joinWaitlist,
+        });
+        // #endregion
         await clerk.joinWaitlist({ emailAddress: email });
+        // #region debug-point D:submit-success
+        debugEvent('D', 'index.html:submit:success', 'Join waitlist success', { email });
+        // #endregion
         showWaitlistState('formSuccess');
       } catch (err) {
+        // #region debug-point E:submit-error
+        debugEvent('E', 'index.html:submit:error', 'Join waitlist failed', {
+          name: err?.name,
+          message: err?.message,
+          code: err?.code,
+          firstErrorCode: err?.errors?.[0]?.code,
+          firstErrorMessage: err?.errors?.[0]?.longMessage || err?.errors?.[0]?.message,
+        });
+        // #endregion
         const details = getClerkErrorDetails(err);
         if (isDuplicateWaitlistError(details)) {
           showWaitlistState('formDuplicate');

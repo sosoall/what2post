@@ -922,8 +922,73 @@
     }, { passive: true });
 
     /* ── Form submit ── */
-    const SUPABASE_URL = 'https://zwlxarnwsotkjsqjkurm.supabase.co';       // e.g. https://xxxxx.supabase.co
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3bHhhcm53c290a2pzcWprdXJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1ODY0NzAsImV4cCI6MjA5NTE2MjQ3MH0.rOsqQKye2n93rKPG5zEYiRw84AoI-N6Ayk8JRKPhhpA'; // Settings → API → anon/public
+    const CLERK_PUBLISHABLE_KEY = 'pk_test_bWFpbi1tb25pdG9yLTM4LmNsZXJrLmFjY291bnRzLmRldiQ';
+    const clerkPromise = initClerk();
+
+    function decodeClerkFrontendApi(publishableKey) {
+      const encoded = publishableKey.split('_')[2];
+      if (!encoded) throw new Error('Missing Clerk frontend API in publishable key');
+      const padded = encoded.padEnd(encoded.length + ((4 - encoded.length % 4) % 4), '=');
+      return atob(padded).slice(0, -1);
+    }
+
+    function loadClerkScript(publishableKey) {
+      if (window.Clerk) return Promise.resolve(window.Clerk);
+
+      const frontendApi = decodeClerkFrontendApi(publishableKey);
+      const scriptSrc = `https://${frontendApi}/npm/@clerk/clerk-js@latest/dist/clerk.browser.js`;
+
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector(`script[src="${scriptSrc}"]`);
+        if (existing) {
+          existing.addEventListener('load', () => resolve(window.Clerk), { once: true });
+          existing.addEventListener('error', () => reject(new Error('Failed to load Clerk')), { once: true });
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.type = 'text/javascript';
+        script.src = scriptSrc;
+        script.setAttribute('data-clerk-publishable-key', publishableKey);
+        script.onload = () => resolve(window.Clerk);
+        script.onerror = () => reject(new Error('Failed to load Clerk'));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function initClerk() {
+      const clerk = await loadClerkScript(CLERK_PUBLISHABLE_KEY);
+      await clerk.load();
+      return clerk;
+    }
+
+    function showWaitlistState(stateId) {
+      document.getElementById('formState1').style.display = stateId === 'formState1' ? '' : 'none';
+      ['formSuccess', 'formDuplicate', 'formError'].forEach(id => {
+        document.getElementById(id).classList.toggle('show', id === stateId);
+      });
+    }
+
+    function getClerkErrorDetails(error) {
+      const first = error?.errors?.[0];
+      return {
+        code: first?.code || error?.code || '',
+        longMessage: first?.longMessage || first?.message || error?.message || '',
+      };
+    }
+
+    function isDuplicateWaitlistError(details) {
+      const text = `${details.code} ${details.longMessage}`.toLowerCase();
+      return text.includes('identification_exists')
+        || text.includes('already')
+        || text.includes('exists');
+    }
+
+    clerkPromise.catch(err => {
+      console.error('Clerk init error:', err);
+    });
 
     document.getElementById('waitlistForm').addEventListener('submit', async function(e) {
       e.preventDefault();
@@ -942,33 +1007,21 @@
       btn.textContent = 'Joining...';
 
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'Prefer': 'return=minimal',
-          },
-          body: JSON.stringify({ email }),
-        });
+        const clerk = await clerkPromise;
+        const { error } = await clerk.waitlist.join({ emailAddress: email });
 
-        const raw = await res.text();
-        const data = raw ? JSON.parse(raw) : {};
-
-        // Treat database unique constraint violations as "already joined"
-        if (data.code === '23505' || res.status === 409) {
-          document.getElementById('formState1').style.display = 'none';
-          document.getElementById('formDuplicate').classList.add('show');
-        } else if (res.ok) {
-          document.getElementById('formState1').style.display = 'none';
-          document.getElementById('formSuccess').classList.add('show');
-        } else {
-          throw new Error(data.message || 'Unknown error');
+        if (error) {
+          const details = getClerkErrorDetails(error);
+          if (isDuplicateWaitlistError(details)) {
+            showWaitlistState('formDuplicate');
+            return;
+          }
+          throw new Error(details.longMessage || 'Unknown error');
         }
+
+        showWaitlistState('formSuccess');
       } catch (err) {
-        document.getElementById('formState1').style.display = 'none';
-        document.getElementById('formError').classList.add('show');
+        showWaitlistState('formError');
         console.error('Waitlist submit error:', err);
       }
     });

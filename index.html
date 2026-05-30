@@ -983,6 +983,8 @@
         hasWaitlist: !!clerk.waitlist,
         waitlistJoinType: typeof clerk.waitlist?.join,
         joinWaitlistType: typeof clerk.joinWaitlist,
+        mountWaitlistType: typeof clerk.mountWaitlist,
+        openWaitlistType: typeof clerk.openWaitlist,
       });
       // #endregion
       await clerk.load();
@@ -991,6 +993,8 @@
         hasWaitlist: !!clerk.waitlist,
         waitlistJoinType: typeof clerk.waitlist?.join,
         joinWaitlistType: typeof clerk.joinWaitlist,
+        mountWaitlistType: typeof clerk.mountWaitlist,
+        openWaitlistType: typeof clerk.openWaitlist,
         waitlistKeys: Object.keys(clerk).filter(key => key.toLowerCase().includes('waitlist')),
       });
       // #endregion
@@ -1047,6 +1051,8 @@
           hasWaitlist: !!clerk.waitlist,
           waitlistJoinType: typeof clerk.waitlist?.join,
           joinWaitlistType: typeof clerk.joinWaitlist,
+          mountWaitlistType: typeof clerk.mountWaitlist,
+          openWaitlistType: typeof clerk.openWaitlist,
         });
         // #endregion
         await clerk.joinWaitlist({ emailAddress: email });
